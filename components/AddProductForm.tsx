@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, SetStateAction } from "react";
 import { addProduct } from "@/app/actions";
 import AuthModal from "./AuthModal";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,8 @@ import { toast } from "sonner";
 // If using Supabase auth, you can import { User } from '@supabase/supabase-js' and replace 'any'
 
 interface AddProductFormProps {
-  user: any | null; 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  user: any | null;
 }
 
 export default function AddProductForm({ user }: AddProductFormProps) {
@@ -50,7 +51,9 @@ export default function AddProductForm({ user }: AddProductFormProps) {
           <Input
             type="url"
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(e: { target: { value: SetStateAction<string> } }) =>
+              setUrl(e.target.value)
+            }
             placeholder="Paste product URL (Amazon, Walmart, etc.)"
             className="h-12 text-base"
             required
@@ -62,6 +65,7 @@ export default function AddProductForm({ user }: AddProductFormProps) {
             disabled={loading}
             className="bg-orange-500 hover:bg-orange-600 h-10 sm:h-12 px-8"
             size="lg"
+            variant="default"
           >
             {loading ? (
               <>

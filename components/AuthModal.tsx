@@ -32,9 +32,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Sign in to continue</DialogTitle>
-          <DialogDescription>
+        <DialogHeader className={undefined}>
+          <DialogTitle className={undefined}>Sign in to continue</DialogTitle>
+          <DialogDescription className={undefined}>
             Track product prices and get alerts on price drops
           </DialogDescription>
         </DialogHeader>
