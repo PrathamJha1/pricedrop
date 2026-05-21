@@ -15,7 +15,7 @@ export async function POST(request) {
     // Use service role to bypass RLS
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
     );
 
     const { data: products, error: productsError } = await supabase
@@ -57,13 +57,12 @@ export async function POST(request) {
           })
           .eq("id", product.id);
 
+        await supabase.from("price_history").insert({
+          product_id: product.id,
+          price: newPrice,
+          currency: productData.currencyCode || product.currency,
+        });
         if (oldPrice !== newPrice) {
-          await supabase.from("price_history").insert({
-            product_id: product.id,
-            price: newPrice,
-            currency: productData.currencyCode || product.currency,
-          });
-
           results.priceChanges++;
 
           if (newPrice < oldPrice) {
@@ -76,7 +75,7 @@ export async function POST(request) {
                 user.email,
                 product,
                 oldPrice,
-                newPrice
+                newPrice,
               );
 
               if (emailResult.success) {
