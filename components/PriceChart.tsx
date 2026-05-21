@@ -18,12 +18,9 @@ interface PriceChartProps {
 }
 
 interface ChartDataPoint {
-  date: string;
+  date: string; // This will hold a unique string containing date + time
   price: number;
 }
-
-// Ensure the return type of getPriceHistory is typed correctly in your actions file.
-// Expecting something like: Array<{ checked_at: string | Date, price: string | number }>
 
 export default function PriceChart({ productId }: PriceChartProps) {
   const [data, setData] = useState<ChartDataPoint[]>([]);
@@ -34,7 +31,14 @@ export default function PriceChart({ productId }: PriceChartProps) {
       const history = await getPriceHistory(productId);
 
       const chartData: ChartDataPoint[] = history.map((item: any) => ({
-        date: new Date(item.checked_at).toLocaleDateString(),
+        // 1. FIXED: Use toLocaleString() with time to ensure every single scrape point has a unique key
+        date: new Date(item.checked_at).toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          second: "2-digit", // Added seconds to ensure 100% uniqueness during rapid testing
+        }),
         price: parseFloat(item.price),
       }));
 
@@ -70,8 +74,18 @@ export default function PriceChart({ productId }: PriceChartProps) {
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-          <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
+          <XAxis
+            dataKey="date"
+            tick={{ fontSize: 12 }}
+            stroke="#9ca3af"
+            // 2. FIXED: Keeps the X-Axis looking clean (e.g. "May 21") instead of showing the long timestamp strings
+            tickFormatter={(value) => value.split(",")[0]}
+          />
+          <YAxis
+            tick={{ fontSize: 12 }}
+            stroke="#9ca3af"
+            tickFormatter={(value) => `$${value}`}
+          />
           <Tooltip
             contentStyle={{
               backgroundColor: "white",
