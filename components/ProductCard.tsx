@@ -20,13 +20,23 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export interface Product {
-  id: string | number;
-  name: string;
-  image_url?: string;
-  currency: string;
-  current_price: number | string;
+// TypeScript Interfaces for the new Database Schema
+export interface ProductLink {
+  id: string;
+  product_id: string;
+  platform: string;
   url: string;
+  current_price: number | string;
+  currency: string;
+  updated_at?: string;
+}
+
+export interface Product {
+  id: string;
+  user_id: string;
+  name: string;
+  image_url: string | null;
+  product_links?: ProductLink[];
 }
 
 interface ProductCardProps {
@@ -37,9 +47,20 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [showChart, setShowChart] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
 
-  const handleDelete = async () => {
-    if (!confirm("Remove this product from tracking?")) return;
+  // Safely get the links array from the new database structure
+  const links = product.product_links || [];
 
+  // Find the link with the lowest current price to feature prominently
+  const bestLink =
+    links.length > 0
+      ? links.reduce((prev, curr) =>
+          Number(prev.current_price) < Number(curr.current_price) ? prev : curr,
+        )
+      : null;
+
+  const handleDelete = async () => {
+    if (!confirm("Remove this product and all its store links from tracking?"))
+      return;
     setDeleting(true);
     await deleteProduct(product.id);
   };
@@ -53,7 +74,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             <img
               src={product.image_url}
               alt={product.name}
-              className="w-20 h-20 object-cover rounded-md border"
+              className="w-20 h-20 object-cover rounded-md border bg-white"
             />
           )}
 
@@ -62,63 +83,87 @@ export default function ProductCard({ product }: ProductCardProps) {
               {product.name}
             </h3>
 
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-orange-500">
-                {product.currency} {product.current_price}
+            {bestLink ? (
+              <div className="flex flex-col gap-1">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-orange-500">
+                    {bestLink.currency} {bestLink.current_price}
+                  </span>
+                  <Badge variant="secondary" className="gap-1">
+                    <TrendingDown className="w-3 h-3" />
+                    Best Price
+                  </Badge>
+                </div>
+                <span className="text-xs text-gray-500">
+                  Tracking across {links.length} platform
+                  {links.length > 1 ? "s" : ""}
+                </span>
+              </div>
+            ) : (
+              <span className="text-gray-500 italic text-sm">
+                No active links found
               </span>
-              <Badge variant="secondary" className="gap-1">
-                <TrendingDown className="w-3 h-3" />
-                Tracking
-              </Badge>
-            </div>
+            )}
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className={undefined}>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowChart(!showChart)}
-            className="gap-1"
-          >
-            {showChart ? (
-              <>
-                <ChevronUp className="w-4 h-4" />
-                Hide Chart
-              </>
-            ) : (
-              <>
-                <ChevronDown className="w-4 h-4" />
-                Show Chart
-              </>
-            )}
-          </Button>
+      <CardContent>
+        <div className="flex flex-wrap gap-2 items-center justify-between">
+          <div className="flex gap-2 flex-wrap">
+            {/* Map a button for every platform being tracked */}
+            {links.map((link) => (
+              <Button
+                key={link.id}
+                variant="outline"
+                size="sm"
+                asChild
+                className="gap-1"
+              >
+                <Link href={link.url} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="w-3 h-3" />
+                  {link.platform}
+                </Link>
+              </Button>
+            ))}
+          </div>
 
-          <Button variant="outline" size="sm" asChild className="gap-1">
-            <Link href={product.url} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="w-4 h-4" />
-              View Product
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowChart(!showChart)}
+              className="gap-1"
+            >
+              {showChart ? (
+                <>
+                  <ChevronUp className="w-4 h-4" /> Hide Chart
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4" /> Show Chart
+                </>
+              )}
+            </Button>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDelete}
-            disabled={deleting}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50 gap-1"
-          >
-            <Trash2 className="w-4 h-4" />
-            Remove
-          </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 gap-1 px-2"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </CardContent>
 
       {showChart && (
-        <CardFooter className="pt-0">
-          <PriceChart productId={product.id} />
+        <CardFooter className="pt-0 border-t mt-4">
+          <div className="w-full pt-4">
+            <PriceChart productId={product.id} />
+          </div>
         </CardFooter>
       )}
     </Card>

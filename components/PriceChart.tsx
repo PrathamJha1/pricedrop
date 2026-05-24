@@ -9,40 +9,72 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
 import { getPriceHistory } from "@/app/actions";
 import { Loader2 } from "lucide-react";
 
-interface PriceChartProps {
-  productId: string | number;
-}
+const PLATFORM_COLORS: Record<string, string> = {
+  Amazon: "#FF9900",
+  Walmart: "#0071CE",
+  BestBuy: "#0046BE",
+  Target: "#CC0000",
+  eBay: "#E53238",
+  Web: "#FA5D19",
+};
 
-interface ChartDataPoint {
-  date: string; // This will hold a unique string containing date + time
-  price: number;
+// Define the shape of the data Recharts expects for multiple lines
+// e.g., { date: "10/12/2023", Amazon: 199.99, BestBuy: 205.00 }
+type ChartDataPoint = {
+  date: string;
+  [platform: string]: string | number;
+};
+
+interface PriceChartProps {
+  productId: string;
 }
 
 export default function PriceChart({ productId }: PriceChartProps) {
   const [data, setData] = useState<ChartDataPoint[]>([]);
+  const [platforms, setPlatforms] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     async function loadData() {
-      const history = await getPriceHistory(productId);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const history: any[] = await getPriceHistory(productId);
 
-      const chartData: ChartDataPoint[] = history.map((item: any) => ({
-        // 1. FIXED: Use toLocaleString() with time to ensure every single scrape point has a unique key
-        date: new Date(item.checked_at).toLocaleString("en-US", {
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-          second: "2-digit", // Added seconds to ensure 100% uniqueness during rapid testing
-        }),
-        price: parseFloat(item.price),
-      }));
+      if (!history || history.length === 0) {
+        setData([]);
+        setLoading(false);
+        return;
+      }
 
-      setData(chartData);
+      // Identify unique platforms for this product
+      const uniquePlatforms = [
+        ...new Set(
+          history.map((item) => item.product_links.platform as string),
+        ),
+      ];
+      setPlatforms(uniquePlatforms);
+
+      // Reshape data for Recharts (grouping by date)
+      const groupedData = history.reduce<ChartDataPoint[]>((acc, item) => {
+        const dateStr = new Date(item.checked_at).toLocaleDateString();
+        const platform = item.product_links.platform;
+        const price = Number(item.price);
+
+        const existingEntry = acc.find((entry) => entry.date === dateStr);
+
+        if (existingEntry) {
+          existingEntry[platform] = price;
+        } else {
+          acc.push({ date: dateStr, [platform]: price });
+        }
+        return acc;
+      }, []);
+
+      setData(groupedData);
       setLoading(false);
     }
 
@@ -60,7 +92,7 @@ export default function PriceChart({ productId }: PriceChartProps) {
 
   if (data.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500 w-full">
+      <div className="text-center py-8 text-gray-500 w-full text-sm">
         No price history yet. Check back after the first daily update!
       </div>
     );
@@ -71,15 +103,21 @@ export default function PriceChart({ productId }: PriceChartProps) {
       <h4 className="text-sm font-semibold mb-4 text-gray-700">
         Price History
       </h4>
-      <ResponsiveContainer width="100%" height={200}>
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+      <ResponsiveContainer width="100%" height={250}>
+        <LineChart
+          data={data}
+          margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="#e5e7eb"
+            vertical={false}
+          />
           <XAxis
             dataKey="date"
             tick={{ fontSize: 12 }}
             stroke="#9ca3af"
-            // 2. FIXED: Keeps the X-Axis looking clean (e.g. "May 21") instead of showing the long timestamp strings
-            tickFormatter={(value) => value.split(",")[0]}
+            tickMargin={10}
           />
           <YAxis
             tick={{ fontSize: 12 }}
@@ -90,17 +128,26 @@ export default function PriceChart({ productId }: PriceChartProps) {
             contentStyle={{
               backgroundColor: "white",
               border: "1px solid #e5e7eb",
-              borderRadius: "6px",
+              borderRadius: "8px",
+              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
             }}
+            itemStyle={{ fontWeight: "bold" }}
           />
-          <Line
-            type="monotone"
-            dataKey="price"
-            stroke="#FA5D19"
-            strokeWidth={2}
-            dot={{ fill: "#FA5D19", r: 4 }}
-            activeDot={{ r: 6 }}
-          />
+          <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }} />
+
+          {platforms.map((platform) => (
+            <Line
+              key={platform}
+              type="monotone"
+              dataKey={platform}
+              name={platform}
+              stroke={PLATFORM_COLORS[platform] || PLATFORM_COLORS.Web}
+              strokeWidth={2}
+              dot={{ r: 3, strokeWidth: 2 }}
+              activeDot={{ r: 6 }}
+              connectNulls={true}
+            />
+          ))}
         </LineChart>
       </ResponsiveContainer>
     </div>
