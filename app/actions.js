@@ -5,7 +5,7 @@ import { scrapeProduct } from "@/lib/firecrawl";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-// Helper function to extract platform name from URL
+// Helper: Extract platform name from URL
 function getPlatformFromUrl(urlString) {
   try {
     const url = new URL(urlString);
@@ -15,6 +15,35 @@ function getPlatformFromUrl(urlString) {
   } catch (e) {
     return "Web";
   }
+}
+
+// NEW Helper: Detect if it's the same product using word overlap (Fuzzy Match)
+function findMatchingProduct(newName, existingProducts) {
+  const normalize = (str) =>
+    str
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, " ")
+      .split(" ")
+      .filter((word) => word.length > 2); // Ignore tiny words like "a", "or"
+
+  const newWords = normalize(newName);
+
+  for (const product of existingProducts) {
+    const existingWords = normalize(product.name);
+
+    // Count how many significant words they share
+    const sharedWords = newWords.filter((word) => existingWords.includes(word));
+
+    // If they share more than 50% of their descriptive words, it's a match!
+    const matchPercentage =
+      sharedWords.length / Math.min(newWords.length, existingWords.length);
+
+    if (matchPercentage >= 0.5) {
+      return product.id; // Return the ID of the umbrella product to group them
+    }
+  }
+
+  return null; // No match found
 }
 
 export async function addProduct(formData) {
@@ -38,7 +67,6 @@ export async function addProduct(formData) {
     const productData = await scrapeProduct(url);
 
     if (!productData.productName || !productData.currentPrice) {
-      console.log(productData, "productData");
       return { error: "Could not extract product information from this URL" };
     }
 
@@ -46,7 +74,7 @@ export async function addProduct(formData) {
     const currency = productData.currencyCode || "USD";
     const platform = getPlatformFromUrl(url);
 
-    // 2. Check if this specific link already exists for this user
+    // 2. Check if this exact link already exists for this user
     const { data: existingLink } = await supabase
       .from("product_links")
       .select("id, current_price, product_id, products!inner(user_id)")
@@ -59,7 +87,7 @@ export async function addProduct(formData) {
     let productLinkId;
 
     if (isUpdate) {
-      // It's an update: Just update the existing link's price and timestamp
+      // EXACT LINK UPDATE: Just update the existing link's price
       productId = existingLink.product_id;
       productLinkId = existingLink.id;
 
@@ -73,22 +101,40 @@ export async function addProduct(formData) {
 
       if (updateError) throw updateError;
     } else {
-      // It's a brand new tracking link.
-      // Create the umbrella "product" first
-      const { data: newProduct, error: prodError } = await supabase
+      // NEW LINK: We need to figure out if it belongs to an existing umbrella product
+
+      // Fetch all of the user's current umbrella products
+      const { data: userProducts } = await supabase
         .from("products")
-        .insert({
-          user_id: user.id,
-          name: productData.productName,
-          image_url: productData.productImageUrl,
-        })
-        .select()
-        .single();
+        .select("id, name")
+        .eq("user_id", user.id);
 
-      if (prodError) throw prodError;
-      productId = newProduct.id;
+      // Run our AI/Fuzzy detection to see if they already track this item
+      const matchedProductId = findMatchingProduct(
+        productData.productName,
+        userProducts || [],
+      );
 
-      // Then create the specific store link
+      if (matchedProductId) {
+        // MATCH FOUND: Attach this new store link to the existing umbrella product
+        productId = matchedProductId;
+      } else {
+        // NO MATCH: Create a brand new umbrella product
+        const { data: newProduct, error: prodError } = await supabase
+          .from("products")
+          .insert({
+            user_id: user.id,
+            name: productData.productName,
+            image_url: productData.productImageUrl,
+          })
+          .select()
+          .single();
+
+        if (prodError) throw prodError;
+        productId = newProduct.id;
+      }
+
+      // Insert the specific store link tied to the correct umbrella product
       const { data: newLink, error: linkError } = await supabase
         .from("product_links")
         .insert({
@@ -105,7 +151,7 @@ export async function addProduct(formData) {
       productLinkId = newLink.id;
     }
 
-    // 3. Add to price history if it's a new product OR the price has changed
+    // 3. Add to price history
     const shouldAddHistory =
       !isUpdate || existingLink.current_price !== newPrice;
 
@@ -120,10 +166,11 @@ export async function addProduct(formData) {
     revalidatePath("/");
     return {
       success: true,
-      product: { id: productId }, // Return ID so UI can handle routing/state if needed
       message: isUpdate
         ? "Product updated with latest price!"
-        : "Product added successfully!",
+        : matchedProductId
+          ? `Added new ${platform} link to existing product!`
+          : "Brand new product tracked!",
     };
   } catch (error) {
     console.error("Add product error:", error);
