@@ -108,7 +108,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className={undefined}>
         <div className="flex flex-wrap gap-2 items-center justify-between">
           <div className="flex gap-2 flex-wrap">
             {/* Map a button for every platform being tracked */}
