@@ -12,84 +12,113 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Use service role to bypass RLS
+    // Use service role to bypass RLS for background jobs
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY,
     );
 
-    const { data: products, error: productsError } = await supabase
-      .from("products")
-      .select("*");
+    // Fetch all active store links AND join the umbrella product info
+    const { data: links, error: linksError } = await supabase.from(
+      "product_links",
+    ).select(`
+        *,
+        products (
+          name,
+          image_url,
+          user_id
+        )
+      `);
 
-    if (productsError) throw productsError;
+    if (linksError) throw linksError;
 
-    console.log(`Found ${products.length} products to check`);
+    console.log(`Found ${links.length} store links to check`);
 
     const results = {
-      total: products.length,
+      total: links.length,
       updated: 0,
       failed: 0,
       priceChanges: 0,
       alertsSent: 0,
     };
 
-    for (const product of products) {
-      try {
-        const productData = await scrapeProduct(product.url);
+    // Process in batches of 5 to speed up execution
+    const BATCH_SIZE = 5;
 
-        if (!productData.currentPrice) {
-          results.failed++;
-          continue;
-        }
+    for (let i = 0; i < links.length; i += BATCH_SIZE) {
+      const batch = links.slice(i, i + BATCH_SIZE);
 
-        const newPrice = parseFloat(productData.currentPrice);
-        const oldPrice = parseFloat(product.current_price);
+      await Promise.all(
+        batch.map(async (link) => {
+          try {
+            const productData = await scrapeProduct(link.url);
 
-        await supabase
-          .from("products")
-          .update({
-            current_price: newPrice,
-            currency: productData.currencyCode || product.currency,
-            name: productData.productName || product.name,
-            image_url: productData.productImageUrl || product.image_url,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", product.id);
+            if (!productData.currentPrice) {
+              results.failed++;
+              return;
+            }
 
-        await supabase.from("price_history").insert({
-          product_id: product.id,
-          price: newPrice,
-          currency: productData.currencyCode || product.currency,
-        });
-        if (oldPrice !== newPrice) {
-          results.priceChanges++;
+            const newPrice = parseFloat(productData.currentPrice);
+            const oldPrice = parseFloat(link.current_price);
 
-          if (newPrice < oldPrice) {
-            const {
-              data: { user },
-            } = await supabase.auth.admin.getUserById(product.user_id);
+            // Only do database updates if the price actually changed
+            if (oldPrice !== newPrice) {
+              results.priceChanges++;
 
-            if (user?.email) {
-              const emailResult = await sendPriceDropAlert(
-                user.email,
-                product,
-                oldPrice,
-                newPrice,
-              );
+              // 1. Update the current price on the link
+              await supabase
+                .from("product_links")
+                .update({
+                  current_price: newPrice,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", link.id);
 
-              if (emailResult.success) {
-                results.alertsSent++;
+              // 2. Add to price history
+              await supabase.from("price_history").insert({
+                product_link_id: link.id,
+                price: newPrice,
+                currency: productData.currencyCode || link.currency,
+              });
+
+              // 3. Handle Email Alerts for price drops
+              if (newPrice < oldPrice) {
+                const {
+                  data: { user },
+                } = await supabase.auth.admin.getUserById(
+                  link.products.user_id,
+                );
+
+                if (user?.email) {
+                  // Reconstruct a product object specifically for the email template
+                  const emailPayload = {
+                    name: link.products.name,
+                    image_url: link.products.image_url,
+                    url: link.url,
+                    currency: link.currency,
+                  };
+
+                  const emailResult = await sendPriceDropAlert(
+                    user.email,
+                    emailPayload,
+                    oldPrice,
+                    newPrice,
+                  );
+
+                  if (emailResult.success) {
+                    results.alertsSent++;
+                  }
+                }
               }
             }
-          }
-        }
 
-        results.updated++;
-      } catch (error) {
-        console.error(`Error processing product ${product.id}:`, error);
-        results.failed++;
-      }
+            results.updated++;
+          } catch (error) {
+            console.error(`Error processing link ${link.id}:`, error);
+            results.failed++;
+          }
+        }),
+      );
     }
 
     return NextResponse.json({
