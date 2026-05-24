@@ -7,7 +7,8 @@ import AuthButton from "@/components/AuthButton";
 import Image from "next/image";
 
 export default async function Home() {
-  const supabase = await createClient();
+  // ✅ GOOD (Next.js 16 asynchronous way)
+  const supabase = await createClient(); // <-- Add 'await' here!
   const {
     data: { user },
   } = await supabase.auth.getUser();
