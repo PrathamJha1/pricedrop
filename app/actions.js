@@ -5,7 +5,7 @@ import { scrapeProduct } from "@/lib/firecrawl";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-// Helper: Extract platform name from URL
+// Helper function to extract platform name from URL
 function getPlatformFromUrl(urlString) {
   try {
     const url = new URL(urlString);
@@ -17,14 +17,14 @@ function getPlatformFromUrl(urlString) {
   }
 }
 
-// NEW Helper: Detect if it's the same product using word overlap (Fuzzy Match)
+// Helper: Detect if it's the same product using word overlap (Fuzzy Match)
 function findMatchingProduct(newName, existingProducts) {
   const normalize = (str) =>
     str
       .toLowerCase()
       .replace(/[^a-z0-9]/g, " ")
       .split(" ")
-      .filter((word) => word.length > 2); // Ignore tiny words like "a", "or"
+      .filter((word) => word.length > 2);
 
   const newWords = normalize(newName);
 
@@ -101,25 +101,22 @@ export async function addProduct(formData) {
 
       if (updateError) throw updateError;
     } else {
-      // NEW LINK: We need to figure out if it belongs to an existing umbrella product
-
-      // Fetch all of the user's current umbrella products
+      // NEW LINK: Figure out if it belongs to an existing umbrella product
       const { data: userProducts } = await supabase
         .from("products")
         .select("id, name")
         .eq("user_id", user.id);
 
-      // Run our AI/Fuzzy detection to see if they already track this item
       const matchedProductId = findMatchingProduct(
         productData.productName,
         userProducts || [],
       );
 
       if (matchedProductId) {
-        // MATCH FOUND: Attach this new store link to the existing umbrella product
+        // Attach this new store link to the existing umbrella product
         productId = matchedProductId;
       } else {
-        // NO MATCH: Create a brand new umbrella product
+        // Create a brand new umbrella product
         const { data: newProduct, error: prodError } = await supabase
           .from("products")
           .insert({
@@ -134,7 +131,7 @@ export async function addProduct(formData) {
         productId = newProduct.id;
       }
 
-      // Insert the specific store link tied to the correct umbrella product
+      // Insert the specific store link
       const { data: newLink, error: linkError } = await supabase
         .from("product_links")
         .insert({
@@ -156,6 +153,7 @@ export async function addProduct(formData) {
       !isUpdate || existingLink.current_price !== newPrice;
 
     if (shouldAddHistory) {
+      // 🚨 CRITICAL FIX: We are now correctly using product_link_id
       await supabase.from("price_history").insert({
         product_link_id: productLinkId,
         price: newPrice,
@@ -181,8 +179,6 @@ export async function addProduct(formData) {
 export async function deleteProduct(productId) {
   try {
     const supabase = await createClient();
-    // Because of the CASCADE delete in SQL, deleting the parent product
-    // automatically wipes out all associated product_links and price_history entries.
     const { error } = await supabase
       .from("products")
       .delete()
@@ -235,7 +231,7 @@ export async function getPriceHistory(productId) {
       `,
       )
       .eq("product_links.product_id", productId)
-      .order("checked_at", { ascending: true });
+      .order("checked_at", { ascending: true }); // Uses checked_at
 
     if (error) throw error;
 

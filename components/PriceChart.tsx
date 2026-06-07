@@ -44,24 +44,30 @@ export default function PriceChart({ productId }: PriceChartProps) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const history: any[] = await getPriceHistory(productId);
 
+      // 🚨 ADD THIS LOG: Open your browser console (F12) to see what Supabase is actually returning
+      console.log("Raw Price History:", history);
+
       if (!history || history.length === 0) {
         setData([]);
         setLoading(false);
         return;
       }
 
-      // Identify unique platforms for this product
+      // Safely map platforms in case the join failed or is named slightly differently
       const uniquePlatforms = [
         ...new Set(
-          history.map((item) => item.product_links.platform as string),
+          history.map((item) => item.product_links?.platform || "Web"),
         ),
       ];
-      setPlatforms(uniquePlatforms);
+      setPlatforms(uniquePlatforms as string[]);
 
       // Reshape data for Recharts (grouping by date)
       const groupedData = history.reduce<ChartDataPoint[]>((acc, item) => {
-        const dateStr = new Date(item.checked_at).toLocaleDateString();
-        const platform = item.product_links.platform;
+        // Fallback to created_at if checked_at doesn't exist
+        const timestamp = item.checked_at || item.created_at;
+        const dateStr = new Date(timestamp).toLocaleDateString();
+
+        const platform = item.product_links?.platform || "Web";
         const price = Number(item.price);
 
         const existingEntry = acc.find((entry) => entry.date === dateStr);
