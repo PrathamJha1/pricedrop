@@ -61,27 +61,27 @@ export async function POST(request) {
             const newPrice = parseFloat(productData.currentPrice);
             const oldPrice = parseFloat(link.current_price);
 
-            // Only do database updates if the price actually changed
+            // 1. ALWAYS add to price history to keep the chart lines flowing daily
+            await supabase.from("price_history").insert({
+              product_link_id: link.id,
+              price: newPrice,
+              currency: productData.currencyCode || link.currency,
+            });
+
+            // 2. ALWAYS update the link so 'updated_at' shows the last check time
+            await supabase
+              .from("product_links")
+              .update({
+                current_price: newPrice,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", link.id);
+
+            // 3. ONLY trigger alerts and change-counters if the price actually fluctuated
             if (oldPrice !== newPrice) {
               results.priceChanges++;
 
-              // 1. Update the current price on the link
-              await supabase
-                .from("product_links")
-                .update({
-                  current_price: newPrice,
-                  updated_at: new Date().toISOString(),
-                })
-                .eq("id", link.id);
-
-              // 2. Add to price history
-              await supabase.from("price_history").insert({
-                product_link_id: link.id,
-                price: newPrice,
-                currency: productData.currencyCode || link.currency,
-              });
-
-              // 3. Handle Email Alerts for price drops
+              // Handle Email Alerts strictly for price DROPS
               if (newPrice < oldPrice) {
                 const {
                   data: { user },
@@ -90,7 +90,6 @@ export async function POST(request) {
                 );
 
                 if (user?.email) {
-                  // Reconstruct a product object specifically for the email template
                   const emailPayload = {
                     name: link.products.name,
                     image_url: link.products.image_url,
