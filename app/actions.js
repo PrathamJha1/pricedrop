@@ -83,8 +83,11 @@ export async function addProduct(formData) {
       .single();
 
     const isUpdate = !!existingLink;
+
+    // ✅ Declare variables globally for the whole function scope
     let productId;
     let productLinkId;
+    let matchedProductId = null;
 
     if (isUpdate) {
       // EXACT LINK UPDATE: Just update the existing link's price
@@ -107,7 +110,8 @@ export async function addProduct(formData) {
         .select("id, name")
         .eq("user_id", user.id);
 
-      const matchedProductId = findMatchingProduct(
+      // ✅ Reassign the variable without using 'const'
+      matchedProductId = findMatchingProduct(
         productData.productName,
         userProducts || [],
       );
@@ -153,7 +157,6 @@ export async function addProduct(formData) {
       !isUpdate || existingLink.current_price !== newPrice;
 
     if (shouldAddHistory) {
-      // 🚨 CRITICAL FIX: We are now correctly using product_link_id
       await supabase.from("price_history").insert({
         product_link_id: productLinkId,
         price: newPrice,
@@ -162,6 +165,8 @@ export async function addProduct(formData) {
     }
 
     revalidatePath("/");
+
+    // ✅ matchedProductId is now safely accessible down here
     return {
       success: true,
       message: isUpdate
