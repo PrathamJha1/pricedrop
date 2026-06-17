@@ -2,13 +2,21 @@ import { createClient } from "@/utils/supabase/server";
 import { getProducts } from "./actions";
 import AddProductForm from "@/components/AddProductForm";
 import ProductCard from "@/components/ProductCard";
-import { TrendingDown, Shield, Bell, Rabbit } from "lucide-react";
+import {
+  TrendingDown,
+  Shield,
+  Bell,
+  Rabbit,
+  AlertCircle,
+  Mail,
+  PlayCircle,
+} from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import Image from "next/image";
 
 export default async function Home() {
   // ✅ GOOD (Next.js 16 asynchronous way)
-  const supabase = await createClient(); // <-- Add 'await' here!
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -55,8 +63,38 @@ export default async function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 px-4">
+      <section className="py-12 px-4">
         <div className="max-w-7xl mx-auto text-center">
+          {/* HR / Interviewer Notice Banner */}
+          <div className="bg-orange-100 border-l-4 border-orange-500 p-4 mb-12 text-left rounded-r-md mx-auto max-w-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start">
+              <div className="shrink-0 mt-0.5">
+                <AlertCircle className="h-5 w-5 text-orange-600" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-orange-800">
+                  Notice for Interviewers & HR
+                </h3>
+                <div className="mt-1 text-sm text-orange-700">
+                  <p>
+                    If the scraping functionality fails, it is due to
+                    insufficient free credits on the Firecrawl API. Please refer
+                    to the demo video below.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Enhanced Mailto Button */}
+            <a
+              href="mailto:prathamjha5683@gmail.com?subject=Support%20Query"
+              className="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-md hover:bg-orange-700 transition-colors shadow-sm"
+            >
+              <Mail className="w-4 h-4" />
+              Contact Admin
+            </a>
+          </div>
+
           <h2 className="text-5xl font-bold text-gray-900 mb-4 tracking-tight">
             Never Miss a Price Drop
           </h2>
@@ -84,6 +122,31 @@ export default async function Home() {
               ))}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Demo Video Section for HR */}
+      <section className="max-w-4xl mx-auto px-4 pb-12">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center flex flex-col items-center justify-center">
+          <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mb-4">
+            <PlayCircle className="w-8 h-8" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-3">
+            Project Demo Walkthrough
+          </h3>
+          <p className="text-gray-600 mb-8 max-w-lg mx-auto">
+            See exactly how the tracking, web scraping, and smart email alerts
+            work in real-time in this brief video demonstration.
+          </p>
+          <a
+            href="https://drive.google.com/file/d/1JyQFMYkiw6PSeB1q2kSmcwicgrGc1Ul4/view?usp=drive_link"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white text-base font-medium rounded-lg hover:bg-gray-800 transition-colors shadow-sm"
+          >
+            <PlayCircle className="w-5 h-5" />
+            Watch Demo Video
+          </a>
         </div>
       </section>
 
