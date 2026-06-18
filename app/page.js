@@ -88,9 +88,7 @@ export default async function Home() {
                   <div className="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-6 mx-auto">
                     <Icon className="w-7 h-7 text-orange-500" />
                   </div>
-                  <h3 className="font-semibold text-lg text-gray-900 mb-3">
-                    {title}
-                  </h3>
+                  <h3 className="font-semibold text-lg text-gray-900 mb-3">{title}</h3>
                   <p className="text-gray-600 leading-relaxed">{description}</p>
                 </div>
               ))}
@@ -99,32 +97,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Demo Video Section for HR */}
-      <section className="max-w-4xl mx-auto px-4 pb-16 w-full">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-10 text-center flex flex-col items-center justify-center">
-          <div className="w-16 h-16 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center mb-6">
-            <PlayCircle className="w-8 h-8" />
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-4">
-            Project Demo Walkthrough
-          </h3>
-          <p className="text-gray-600 mb-8 max-w-lg mx-auto text-lg">
-            See exactly how the tracking, web scraping, and smart email alerts
-            work in real-time in this brief video demonstration.
-          </p>
-          <a
-            href="https://drive.google.com/file/d/1JyQFMYkiw6PSeB1q2kSmcwicgrGc1Ul4/view?usp=drive_link"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-gray-900 text-white text-base font-medium rounded-xl hover:bg-gray-800 transition-colors shadow-sm hover:shadow-md hover:-translate-y-0.5"
-          >
-            <PlayCircle className="w-5 h-5" />
-            Watch Demo Video
-          </a>
-        </div>
-      </section>
-
-      {/* Products Grid (Fixed Layout & Alignment) */}
+      {/* Products Grid */}
       {user && products.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 pb-20 flex-grow w-full">
           <div className="flex items-center justify-between mb-8 border-b border-gray-200 pb-4">
@@ -136,7 +109,6 @@ export default async function Home() {
             </span>
           </div>
 
-          {/* Changed to lg:grid-cols-3 and items-start to prevent weird stretching */}
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-start">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />
@@ -161,7 +133,7 @@ export default async function Home() {
       )}
 
       {/* Future Scope Section */}
-      <section className="max-w-7xl mx-auto px-4 pb-24 w-full">
+      <section className="max-w-7xl mx-auto px-4 pb-16 w-full">
         <div className="bg-white rounded-2xl shadow-sm border border-orange-200 p-10 relative overflow-hidden">
           <div className="absolute -top-10 -right-10 p-8 opacity-5 pointer-events-none">
             <Rocket className="w-64 h-64 text-orange-900" />
@@ -181,9 +153,7 @@ export default async function Home() {
               <div className="bg-orange-50/50 p-6 rounded-xl border border-orange-100 transition-colors hover:bg-orange-50">
                 <div className="flex items-center gap-3 mb-4">
                   <Layers className="w-6 h-6 text-orange-600" />
-                  <h4 className="font-semibold text-gray-900">
-                    Multi-Platform
-                  </h4>
+                  <h4 className="font-semibold text-gray-900">Multi-Platform</h4>
                 </div>
                 <p className="text-sm text-gray-600 leading-relaxed">
                   Expanding the scraping engine to support simultaneous
@@ -210,9 +180,7 @@ export default async function Home() {
               <div className="bg-orange-50/50 p-6 rounded-xl border border-orange-100 transition-colors hover:bg-orange-50">
                 <div className="flex items-center gap-3 mb-4">
                   <Puzzle className="w-6 h-6 text-orange-600" />
-                  <h4 className="font-semibold text-gray-900">
-                    Browser Extension
-                  </h4>
+                  <h4 className="font-semibold text-gray-900">Browser Extension</h4>
                 </div>
                 <p className="text-sm text-gray-600 leading-relaxed">
                   A React-based Chrome Extension that injects a "Track Price"
@@ -224,9 +192,7 @@ export default async function Home() {
               <div className="bg-orange-50/50 p-6 rounded-xl border border-orange-100 transition-colors hover:bg-orange-50">
                 <div className="flex items-center gap-3 mb-4">
                   <BarChart3 className="w-6 h-6 text-orange-600" />
-                  <h4 className="font-semibold text-gray-900">
-                    Detailed Analytics
-                  </h4>
+                  <h4 className="font-semibold text-gray-900">Detailed Analytics</h4>
                 </div>
                 <p className="text-sm text-gray-600 leading-relaxed">
                   Expanding the dashboard to provide rich user metrics,
@@ -239,38 +205,50 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Footer / HR & Interviewer Notice */}
-      <footer className="mt-auto bg-white border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <div className="bg-orange-50 border border-orange-200 rounded-2xl p-8 flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            <div className="bg-orange-100 p-4 rounded-full shrink-0">
-              <AlertCircle className="w-8 h-8 text-orange-600" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Notice for Interviewers & HR
+      {/* Combined Demo & Evaluator Notice Section */}
+      <section className="max-w-5xl mx-auto px-4 pb-20 w-full">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          {/* Top Half: The Video CTA */}
+          <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-8 sm:p-10 text-white flex flex-col sm:flex-row items-center justify-between gap-8">
+            <div className="max-w-xl text-center sm:text-left">
+              <h3 className="text-2xl sm:text-3xl font-bold mb-3">
+                Project Demo & Walkthrough
               </h3>
-              <p className="text-gray-700 leading-relaxed">
-                If the live web scraping functionality fails, it is likely due
-                to insufficient free credits on the Firecrawl API. Please refer
-                to the Demo Video above to see the application in action. For
-                any issues or queries, please email{" "}
-                <a
-                  href="mailto:prathamjha5683@gmail.com"
-                  className="font-bold text-orange-700 hover:underline"
-                >
-                  prathamjha5683@gmail.com
-                </a>{" "}
-                with the subject{" "}
-                <span className="font-bold text-orange-700">
-                  "Support Query"
-                </span>
-                .
+              <p className="text-orange-100 text-lg leading-relaxed">
+                See exactly how the product tracking, web scraping engine, and smart email alerts function together in real-time.
               </p>
             </div>
+            <a
+              href="https://drive.google.com/file/d/1JyQFMYkiw6PSeB1q2kSmcwicgrGc1Ul4/view?usp=drive_link"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 bg-white text-orange-600 px-8 py-4 rounded-xl text-lg font-bold flex items-center gap-2 hover:bg-gray-50 hover:-translate-y-0.5 transition-all shadow-md active:translate-y-0"
+            >
+              <PlayCircle className="w-6 h-6" />
+              Watch Demo
+            </a>
           </div>
 
-          <div className="text-center text-gray-500 text-sm mt-12 font-medium">
+          {/* Bottom Half: The HR Warning */}
+          <div className="p-8 sm:p-10 bg-orange-50/50 flex flex-col sm:flex-row gap-5 items-start sm:items-center text-gray-700 border-t border-orange-100">
+            <div className="bg-white p-3 rounded-full shadow-sm border border-orange-100 shrink-0">
+              <AlertCircle className="w-8 h-8 text-orange-500" />
+            </div>
+            <p className="leading-relaxed text-base">
+              <strong className="text-gray-900 block mb-1 text-lg">Notice for Evaluators & HR</strong>
+              If the live web scraping functionality fails during testing, it is likely due to insufficient free credits on the Firecrawl API. Please refer to the Demo Video above to see the application's full capabilities. For any inquiries, contact{" "}
+              <a href="mailto:prathamjha5683@gmail.com" className="font-bold text-orange-600 hover:underline">
+                prathamjha5683@gmail.com
+              </a>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Minimal Footer */}
+      <footer className="mt-auto bg-white border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="text-center text-gray-500 text-sm font-medium">
             <p>
               © {new Date().getFullYear()} Price Drop Tracker. Built by Pratham.
             </p>
