@@ -17,6 +17,7 @@ import {
   TrendingDown,
   ChevronDown,
   ChevronUp,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -108,7 +109,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
       </CardHeader>
 
-      <CardContent className={undefined}>
+      <CardContent>
         <div className="flex flex-wrap gap-2 items-center justify-between">
           <div className="flex gap-2 flex-wrap">
             {/* Map a button for every platform being tracked */}
@@ -153,7 +154,11 @@ export default function ProductCard({ product }: ProductCardProps) {
               disabled={deleting}
               className="text-red-600 hover:text-red-700 hover:bg-red-50 gap-1 px-2"
             >
-              <Trash2 className="w-4 h-4" />
+              {deleting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
             </Button>
           </div>
         </div>
