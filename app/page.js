@@ -10,6 +10,11 @@ import {
   AlertCircle,
   Mail,
   PlayCircle,
+  Rocket,
+  Target,
+  Puzzle,
+  BarChart3,
+  Layers,
 } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import Image from "next/image";
@@ -126,7 +131,7 @@ export default async function Home() {
       </section>
 
       {/* Demo Video Section for HR */}
-      <section className="max-w-4xl mx-auto px-4 pb-12">
+      <section className="max-w-4xl mx-auto px-4 pb-8">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center flex flex-col items-center justify-center">
           <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mb-4">
             <PlayCircle className="w-8 h-8" />
@@ -147,6 +152,92 @@ export default async function Home() {
             <PlayCircle className="w-5 h-5" />
             Watch Demo Video
           </a>
+        </div>
+      </section>
+
+      {/* Future Scope Section */}
+      <section className="max-w-4xl mx-auto px-4 pb-12">
+        <div className="bg-white rounded-xl shadow-sm border border-orange-200 p-8 relative overflow-hidden">
+          {/* Subtle background icon decoration */}
+          <div className="absolute -top-4 -right-4 p-8 opacity-5 pointer-events-none">
+            <Rocket className="w-48 h-48 text-orange-900" />
+          </div>
+
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <Rocket className="w-5 h-5 text-orange-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900">
+                Future Scope & Roadmap
+              </h3>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-6">
+              {/* Feature 1 */}
+              <div className="bg-orange-50/50 p-5 rounded-lg border border-orange-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <Layers className="w-5 h-5 text-orange-600" />
+                  <h4 className="font-semibold text-gray-900">
+                    Multi-Platform Comparison
+                  </h4>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Expanding the scraping engine to support simultaneous
+                  cross-platform comparison. Instantly aggregate and identify
+                  the absolute best deal across Amazon, BestBuy, Walmart, etc.
+                </p>
+              </div>
+
+              {/* Feature 2 */}
+              <div className="bg-orange-50/50 p-5 rounded-lg border border-orange-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="w-5 h-5 text-orange-600" />
+                  <h4 className="font-semibold text-gray-900">
+                    Custom Target Alerts
+                  </h4>
+                </div>
+                <p className="text-sm text-gray-600">
+                  LLD schema updates to introduce a{" "}
+                  <code className="bg-orange-100 px-1 py-0.5 rounded text-orange-800">
+                    target_price
+                  </code>{" "}
+                  threshold. Users can specify custom logic (e.g., "Only alert
+                  me if it drops below ₹400") to reduce email noise.
+                </p>
+              </div>
+
+              {/* Feature 3 */}
+              <div className="bg-orange-50/50 p-5 rounded-lg border border-orange-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <Puzzle className="w-5 h-5 text-orange-600" />
+                  <h4 className="font-semibold text-gray-900">
+                    Browser Extension
+                  </h4>
+                </div>
+                <p className="text-sm text-gray-600">
+                  A React-based Chrome Extension that injects a "Track Price"
+                  button directly into e-commerce product pages, eliminating
+                  friction and enabling 1-click tracking.
+                </p>
+              </div>
+
+              {/* Feature 4 */}
+              <div className="bg-orange-50/50 p-5 rounded-lg border border-orange-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <BarChart3 className="w-5 h-5 text-orange-600" />
+                  <h4 className="font-semibold text-gray-900">
+                    Detailed Analytics
+                  </h4>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Expanding the Recharts dashboard to provide rich user metrics,
+                  including KPIs like "Total Money Saved," "Biggest Historical
+                  Price Drop," and "Average Time to Drop."
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
